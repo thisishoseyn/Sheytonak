@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Sheytonak — Onchain Game</title>
+  <title>Sheytonak — Onchain Game on Base</title>
   <style>
     :root, [data-theme="dark"] {
       --bg: #05070c;
-      --surface: #0b0f19;
+      --surface: rgba(11, 15, 25, 0.92);
+      --surface-solid: #0b0f19;
       --surface-2: #131a29;
       --surface-hover: #1c263b;
       --border: rgba(255, 255, 255, 0.08);
@@ -25,12 +26,13 @@
       --score-green: #00dc82;
       --gold: #f59e0b;
       --danger: #f43f5e;
-      --shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.78);
     }
 
     [data-theme="light"] {
       --bg: #f1f5f9;
-      --surface: #ffffff;
+      --surface: rgba(255, 255, 255, 0.94);
+      --surface-solid: #ffffff;
       --surface-2: #e2e8f0;
       --surface-hover: #cbd5e1;
       --border: #cbd5e1;
@@ -79,14 +81,14 @@
     }
 
     .topbar {
-      height: 56px;
+      height: 54px;
       width: 100%;
       padding: 0 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       border-bottom: 1px solid var(--border);
-      background-color: var(--surface);
+      background-color: var(--surface-solid);
       z-index: 30;
       flex-shrink: 0;
     }
@@ -136,7 +138,7 @@
     }
 
     .nav-tab {
-      height: 30px;
+      height: 29px;
       padding: 0 12px;
       border-radius: 7px;
       border: none;
@@ -153,7 +155,7 @@
 
     .nav-tab:hover { color: var(--text); }
     .nav-tab.active {
-      background-color: var(--surface);
+      background-color: var(--surface-solid);
       color: var(--text);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
@@ -165,7 +167,7 @@
     }
 
     .pill-btn {
-      height: 34px;
+      height: 33px;
       padding: 0 11px;
       border-radius: 9px;
       border: 1px solid var(--border);
@@ -208,11 +210,11 @@
     .viewport {
       flex: 1;
       width: 100%;
-      height: calc(100vh - 56px);
+      height: calc(100vh - 54px);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 12px 18px;
+      padding: 10px 16px;
       overflow: hidden;
       position: relative;
     }
@@ -230,15 +232,7 @@
     #panePlay {
       align-items: center;
       justify-content: center;
-    }
-
-    .play-workspace {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 18px;
-      max-width: 100%;
-      max-height: 100%;
+      position: relative;
     }
 
     .arena-column {
@@ -246,14 +240,15 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      height: 100%;
       gap: 8px;
     }
 
     .hud-bar {
-      width: 440px;
-      max-width: 92vw;
-      height: 48px;
+      width: min(560px, calc((100vh - 122px) * 0.8), 94vw);
+      height: 46px;
       background-color: var(--surface);
+      backdrop-filter: blur(12px);
       border: 1px solid var(--border);
       border-radius: 14px;
       display: grid;
@@ -285,15 +280,13 @@
 
     .canvas-shell {
       position: relative;
-      width: 440px;
-      max-width: 92vw;
-      height: 550px;
-      max-height: calc(100vh - 135px);
-      aspect-ratio: 480 / 600;
+      width: min(560px, calc((100vh - 122px) * 0.8), 94vw);
+      height: min(700px, calc(100vh - 122px));
+      aspect-ratio: 560 / 700;
       background-color: var(--canvas-bg);
       border-radius: 18px;
       border: 1.5px solid var(--border-strong);
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.08);
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.85), 0 0 36px rgba(56, 189, 248, 0.1);
       overflow: hidden;
       flex-shrink: 0;
     }
@@ -349,7 +342,7 @@
     .tier-badge {
       pointer-events: none;
       height: 26px;
-      padding: 0 10px;
+      padding: 0 11px;
       border-radius: 999px;
       border: 1px solid rgba(56, 189, 248, 0.35);
       background-color: rgba(13, 17, 26, 0.85);
@@ -387,21 +380,170 @@
       display: block;
     }
 
-    .mini-lb-card {
-      width: 240px;
-      background-color: var(--surface);
+    /* INTERACTIVE GAME OVER OVERLAY WITH PROMINENT ACTION BUTTONS */
+    .gameover-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(5, 7, 12, 0.91);
+      backdrop-filter: blur(10px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 22;
+      text-align: center;
+      animation: fadeIn 0.25s ease;
+    }
+    .gameover-overlay.show {
+      display: flex;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.97); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .go-badge {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: rgba(244, 63, 94, 0.16);
+      color: #fb7185;
+      border: 1px solid rgba(244, 63, 94, 0.35);
+      margin-bottom: 10px;
+    }
+    .go-title {
+      font-size: 32px;
+      font-weight: 900;
+      color: #f43f5e;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+      text-shadow: 0 0 24px rgba(244, 63, 94, 0.4);
+    }
+    .go-stats-box {
+      width: 100%;
+      max-width: 320px;
+      background: var(--surface-2);
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: 14px;
       padding: 14px;
-      box-shadow: var(--shadow);
+      margin: 12px 0 18px 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .go-stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .go-stat-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+    .go-stat-val {
+      font-family: monospace;
+      font-size: 18px;
+      font-weight: 900;
+    }
+    .go-actions {
+      width: 100%;
+      max-width: 320px;
       display: flex;
       flex-direction: column;
       gap: 10px;
-      flex-shrink: 0;
+    }
+    .go-btn-mint {
+      width: 100%;
+      height: 46px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 10px 26px rgba(16, 185, 129, 0.35);
+      transition: transform 0.12s ease;
+    }
+    .go-btn-mint:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+    .go-btn-mint:disabled {
+      opacity: 0.7;
+      cursor: default;
+    }
+    .go-btn-restart {
+      width: 100%;
+      height: 46px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(56, 189, 248, 0.45);
+      background: linear-gradient(135deg, #0052ff, #0284c7);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 10px 26px rgba(0, 82, 255, 0.35);
+      transition: transform 0.12s ease;
+    }
+    .go-btn-restart:hover {
+      transform: translateY(-1px);
+    }
+    .go-secondary-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .go-btn-sub {
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    .go-btn-sub:hover {
+      border-color: var(--accent);
     }
 
-    @media (max-width: 760px) {
-      .mini-lb-card {
+    /* FLOATING TOP-RIGHT CORNER LEADERBOARD WIDGET */
+    .corner-lb-card {
+      position: fixed;
+      top: 68px;
+      right: 16px;
+      width: 235px;
+      background-color: var(--surface);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 25;
+    }
+
+    @media (max-width: 1040px) {
+      .corner-lb-card {
         display: none;
       }
     }
@@ -410,14 +552,15 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 800;
       color: var(--text-muted);
       text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     .mini-lb-link {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--accent);
       background: none;
       border: none;
@@ -428,15 +571,16 @@
     .mini-lb-list {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
+      min-height: 76px;
     }
 
     .mini-lb-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 7px 9px;
-      border-radius: 9px;
+      padding: 6px 8px;
+      border-radius: 8px;
       background-color: var(--surface-2);
       font-size: 11px;
     }
@@ -465,7 +609,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 90px;
+      max-width: 92px;
     }
 
     .mini-pts {
@@ -477,8 +621,8 @@
 
     .mini-mint-btn {
       width: 100%;
-      height: 36px;
-      border-radius: 10px;
+      height: 34px;
+      border-radius: 9px;
       border: none;
       background: linear-gradient(135deg, #10b981, #059669);
       color: #ffffff;
@@ -495,7 +639,7 @@
     }
 
     .legend-box {
-      padding: 8px 10px;
+      padding: 7px 9px;
       border-radius: 10px;
       background-color: var(--surface-2);
       border: 1px solid var(--border);
@@ -503,7 +647,7 @@
       color: var(--text-muted);
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
     }
     .legend-row {
       display: flex;
@@ -538,7 +682,7 @@
     }
 
     .stat-card {
-      background-color: var(--surface);
+      background-color: var(--surface-solid);
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 14px;
@@ -571,7 +715,7 @@
     }
 
     .contract-box {
-      background-color: var(--surface);
+      background-color: var(--surface-solid);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 12px 14px;
@@ -604,7 +748,7 @@
     }
 
     .lb-table-card {
-      background-color: var(--surface);
+      background-color: var(--surface-solid);
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 16px;
@@ -673,7 +817,7 @@
       width: 34px;
       height: 34px;
       border-radius: 50%;
-      background-color: var(--surface);
+      background-color: var(--surface-solid);
       border: 1px solid var(--border);
       color: var(--text-muted);
       display: inline-flex;
@@ -708,7 +852,7 @@
     .modal-card {
       width: 100%;
       max-width: 420px;
-      background-color: var(--surface);
+      background-color: var(--surface-solid);
       border: 1px solid var(--border-strong);
       border-radius: 18px;
       padding: 20px;
@@ -914,7 +1058,7 @@
       position: fixed;
       bottom: 16px;
       right: 16px;
-      background-color: var(--surface);
+      background-color: var(--surface-solid);
       border: 1px solid var(--accent);
       border-radius: 10px;
       padding: 10px 14px;
@@ -947,7 +1091,7 @@
           <span>🎮</span><span>Play Arena</span>
         </button>
         <button type="button" class="nav-tab" id="tabBtnLb" onclick="switchTab('leaderboard')">
-          <span>🏆</span><span>Leaderboard & Contract</span>
+          <span>🏆</span><span>Leaderboard &amp; Contract</span>
         </button>
       </div>
     </div>
@@ -956,6 +1100,10 @@
       <button type="button" class="pill-btn gm-pill" onclick="openGmModal()">
         <span>☀️</span>
         <span id="topGmText">GM (1.0x)</span>
+      </button>
+
+      <button type="button" class="pill-btn" onclick="toggleSound()" id="topSoundBtn" title="Toggle Arcade Audio">
+        <span>🔊</span><span>SFX</span>
       </button>
 
       <button type="button" class="pill-btn" onclick="toggleTheme()" id="topThemeBtn">
@@ -983,77 +1131,113 @@
 
     <!-- TAB 1: PLAY ARENA -->
     <section class="tab-pane active" id="panePlay">
-      <div class="play-workspace">
-        <div class="arena-column">
-          <div class="hud-bar">
-            <div class="hud-cell">
-              <div class="hud-lbl">Wave</div>
-              <div class="hud-val" id="hudWave">1</div>
-            </div>
-            <div class="hud-cell">
-              <div class="hud-lbl">Orbs (Max 50)</div>
-              <div class="hud-val" id="hudOrbs" style="color:var(--accent)">3 / 50</div>
-            </div>
-            <div class="hud-cell">
-              <div class="hud-lbl">GM Boost</div>
-              <div class="hud-val" id="hudGm" style="color:var(--gold)">1.0x</div>
-            </div>
-            <div class="hud-cell">
-              <div class="hud-lbl">Score</div>
-              <div class="hud-val" id="hudScore" style="color:var(--score-green)">0</div>
-            </div>
-            <div class="hud-cell">
-              <div class="hud-lbl">Sweeps</div>
-              <div class="hud-val" id="hudSweeps" style="color:#a855f7">0⚡</div>
-            </div>
+      <div class="arena-column">
+        <div class="hud-bar">
+          <div class="hud-cell">
+            <div class="hud-lbl">Wave</div>
+            <div class="hud-val" id="hudWave">1</div>
           </div>
-
-          <div class="canvas-shell">
-            <div class="canvas-top-controls">
-              <div style="display:flex;gap:6px;">
-                <button type="button" class="ctrl-chip" id="speedBtn" onclick="toggleSpeed()">⏩ 1x Speed</button>
-                <button type="button" class="ctrl-chip" id="recallBtn" onclick="recallOrbs()" style="display:none;color:var(--danger);">⏬ Recall</button>
-              </div>
-              <span class="tier-badge" id="tierBadge">TIER I • WARMUP</span>
-              <button type="button" class="ctrl-chip" onclick="restartGame()">🔄 Restart</button>
-            </div>
-
-            <div class="sweep-banner" id="sweepBanner">⚡ CLEAN SWEEP! +2,500 BONUS</div>
-            <canvas id="gameCanvas" width="480" height="600"></canvas>
+          <div class="hud-cell">
+            <div class="hud-lbl">Orbs (Max 50)</div>
+            <div class="hud-val" id="hudOrbs" style="color:var(--accent)">3 / 50</div>
+          </div>
+          <div class="hud-cell">
+            <div class="hud-lbl">GM Boost</div>
+            <div class="hud-val" id="hudGm" style="color:var(--gold)">1.0x</div>
+          </div>
+          <div class="hud-cell">
+            <div class="hud-lbl">Score</div>
+            <div class="hud-val" id="hudScore" style="color:var(--score-green)">0</div>
+          </div>
+          <div class="hud-cell">
+            <div class="hud-lbl">Sweeps</div>
+            <div class="hud-val" id="hudSweeps" style="color:#a855f7">0⚡</div>
           </div>
         </div>
 
-        <!-- COMPACT MINI LEADERBOARD & POWERUP GUIDE -->
-        <aside class="mini-lb-card">
-          <div class="mini-lb-head">
-            <span>🏆 Top Onchain</span>
-            <button type="button" class="mini-lb-link" onclick="switchTab('leaderboard')">Full View →</button>
+        <div class="canvas-shell">
+          <div class="canvas-top-controls">
+            <div style="display:flex;gap:6px;">
+              <button type="button" class="ctrl-chip" id="speedBtn" onclick="toggleSpeed()">⏩ 1x Speed</button>
+              <button type="button" class="ctrl-chip" id="recallBtn" onclick="recallOrbs()" style="display:none;color:var(--danger);">⏬ Recall</button>
+            </div>
+            <span class="tier-badge" id="tierBadge">TIER I • WARMUP</span>
+            <button type="button" class="ctrl-chip" onclick="restartGame()">🔄 Restart</button>
           </div>
-          <div class="mini-lb-list" id="miniLbList"></div>
-          <button type="button" class="mini-mint-btn" onclick="mintHighscoreOnchain()">
-            <span>🏆</span><span>Mint Score Onchain</span>
-          </button>
 
-          <div class="legend-box">
-            <div style="font-weight:800;color:var(--text);font-size:10px;text-transform:uppercase;">Arena Mechanics</div>
-            <div class="legend-row"><span>🔵 Orb Cap</span><span>Max 50 Orbs</span></div>
-            <div class="legend-row"><span>🛡️ Armored Brick</span><span>1.5x HP + Shield</span></div>
-            <div class="legend-row"><span>💥 Nova Bomb</span><span>3x3 Blast</span></div>
-            <div class="legend-row"><span>⚡ Cross Laser</span><span>Row & Col Beam</span></div>
-            <div class="legend-row"><span>✨ Nova Prism</span><span>1-Hit +4 Burst</span></div>
+          <div class="sweep-banner" id="sweepBanner">⚡ CLEAN SWEEP! +2,500 BONUS</div>
+          <canvas id="gameCanvas" width="560" height="700"></canvas>
+
+          <!-- GAME OVER ACTION OVERLAY -->
+          <div class="gameover-overlay" id="gameOverOverlay">
+            <div class="go-badge">Run Finished • Base Mainnet</div>
+            <div class="go-title">WAVE OVERRUN</div>
+            <div style="font-size:12px;color:var(--text-muted);">Record your run onchain or share your score card!</div>
+
+            <div class="go-stats-box">
+              <div class="go-stat-item">
+                <span class="go-stat-lbl">Final Score</span>
+                <span class="go-stat-val" id="goFinalScore" style="color:var(--score-green);">0</span>
+              </div>
+              <div class="go-stat-item">
+                <span class="go-stat-lbl">Wave Reached</span>
+                <span class="go-stat-val" id="goFinalWave" style="color:var(--accent);">Wave 1</span>
+              </div>
+            </div>
+
+            <div class="go-actions">
+              <button type="button" class="go-btn-mint" id="goMintBtn" onclick="mintRunScoreOnchain()">
+                <span>⛓️</span><span>Submit Score Onchain</span>
+              </button>
+              <button type="button" class="go-btn-restart" onclick="restartGame()">
+                <span>🔄</span><span>Restart Game</span>
+              </button>
+              <div class="go-secondary-row">
+                <button type="button" class="go-btn-sub" onclick="downloadScoreCard()">
+                  <span>📸</span><span>Save Score Card</span>
+                </button>
+                <button type="button" class="go-btn-sub" onclick="shareScoreOnX()">
+                  <span>𝕏</span><span>Share on X</span>
+                </button>
+              </div>
+            </div>
           </div>
-        </aside>
+        </div>
       </div>
+
+      <!-- FLOATING TOP-RIGHT LIVE ONCHAIN LEADERBOARD WIDGET -->
+      <aside class="corner-lb-card" id="cornerLbWidget">
+        <div class="mini-lb-head">
+          <span>🏆 Live Onchain Top</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button type="button" class="mini-lb-link" onclick="syncOnchainLeaderboard(true)" title="Refresh from Base">↻</button>
+            <button type="button" class="mini-lb-link" onclick="switchTab('leaderboard')">Full →</button>
+          </div>
+        </div>
+        <div class="mini-lb-list" id="miniLbList"></div>
+        <button type="button" class="mini-mint-btn" onclick="mintHighscoreOnchain()">
+          <span>🏆</span><span>Mint Score Onchain</span>
+        </button>
+
+        <div class="legend-box">
+          <div style="font-weight:800;color:var(--text);font-size:10px;text-transform:uppercase;">Arena Mechanics</div>
+          <div class="legend-row"><span>🔵 Orb Cap</span><span>Max 50 Orbs</span></div>
+          <div class="legend-row"><span>🛡️ Armored Brick</span><span>1.45x HP + Shield</span></div>
+          <div class="legend-row"><span>💥 Nova Bomb</span><span>3x3 Blast</span></div>
+          <div class="legend-row"><span>⚡ Cross Laser</span><span>Row &amp; Col Beam</span></div>
+          <div class="legend-row"><span>✨ Nova Prism</span><span>1-Hit +4 Burst</span></div>
+        </div>
+      </aside>
     </section>
 
-    <!-- TAB 2: FULL LEADERBOARD & CONTRACTS -->
+    <!-- TAB 2: FULL ONCHAIN LEADERBOARD & CONTRACT -->
     <section class="tab-pane" id="paneLeaderboard">
       <div class="lb-full-container">
         <div class="lb-stats-banner">
           <div class="stat-card">
             <span class="stat-card-lbl">Your Best Score</span>
             <span class="stat-card-val" id="fullBestScore" style="color:var(--score-green)">0</span>
-            <span class="stat-card-sub" id="fullRankSub">Global Rank: #6</span>
+            <span class="stat-card-sub" id="fullRankSub">Onchain Rank: —</span>
           </div>
           <div class="stat-card">
             <span class="stat-card-lbl">Highest Wave</span>
@@ -1066,9 +1250,9 @@
             <span class="stat-card-sub" id="fullGmStreakSub">0 Day Streak</span>
           </div>
           <div class="stat-card">
-            <span class="stat-card-lbl">Onchain TXs</span>
-            <span class="stat-card-val" id="fullTxCount">0 TXs</span>
-            <span class="stat-card-sub">Base Mainnet</span>
+            <span class="stat-card-lbl">Onchain Players</span>
+            <span class="stat-card-val" id="fullPlayerCount">0</span>
+            <span class="stat-card-sub" id="lbSyncStatus">Live Base RPC Sync</span>
           </div>
         </div>
 
@@ -1087,8 +1271,12 @@
 
         <div class="lb-table-card">
           <div class="lb-table-toolbar">
-            <div style="font-size:16px;font-weight:800;">Sheytonak — Onchain Game Hall of Fame</div>
+            <div>
+              <div style="font-size:16px;font-weight:800;">Sheytonak — Live Onchain Hall of Fame</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">100% real players &amp; scores read directly from Base Mainnet contract logs</div>
+            </div>
             <div style="display:flex;gap:8px;align-items:center;">
+              <button type="button" class="ctrl-chip" onclick="syncOnchainLeaderboard(true)">🔄 Sync Base Logs</button>
               <button type="button" class="mini-mint-btn" style="width:auto;padding:0 14px;" onclick="mintHighscoreOnchain()">
                 🏆 Mint Score Onchain
               </button>
@@ -1099,12 +1287,11 @@
             <thead>
               <tr>
                 <th>Rank</th>
-                <th>Player</th>
+                <th>Player / Wallet</th>
                 <th>Network</th>
                 <th>Best Wave</th>
-                <th>Clean Sweeps</th>
-                <th>GM Multi</th>
-                <th style="text-align:right;">Verified Score</th>
+                <th>GM Streak</th>
+                <th style="text-align:right;">Onchain Score</th>
               </tr>
             </thead>
             <tbody id="fullLbBody"></tbody>
@@ -1127,7 +1314,7 @@
         <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
       </svg>
     </a>
-    <span style="font-size:11px;font-weight:700;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);padding:6px 11px;border-radius:999px;box-shadow:var(--shadow);letter-spacing:0.01em;">made with ❤️ by hoseyn</span>
+    <span style="font-size:11px;font-weight:700;color:var(--text-muted);background:var(--surface-solid);border:1px solid var(--border);padding:6px 11px;border-radius:999px;box-shadow:var(--shadow);letter-spacing:0.01em;">made with ❤️ by hoseyn</span>
   </div>
 
   <!-- MODAL 1: WELCOME & PROFILE SETUP -->
@@ -1135,11 +1322,11 @@
     <div class="modal-card">
       <div id="setupStep1">
         <div class="modal-header-row">
-          <span class="step-tag">Step 1 of 2 • Open Source & Safe</span>
+          <span class="step-tag">Step 1 of 2 • Open Source &amp; Safe</span>
           <button type="button" class="ctrl-chip" onclick="skipToGame()">Skip ✕</button>
         </div>
         <div class="modal-title">Sheytonak — Onchain Game</div>
-        <div class="modal-desc">Built exclusively on Base — Aim smart, build up to 50 orbs, shatter armored bricks, and mint highscores onchain.</div>
+        <div class="modal-desc">Built exclusively on Base — Aim with precision trajectory preview, build up to 50 orbs, and record your highscores live onchain.</div>
 
         <div class="trust-card">
           <span style="font-size:16px;">🛡️</span>
@@ -1150,10 +1337,10 @@
         </div>
 
         <div class="trust-card">
-          <span style="font-size:16px;">🎯</span>
+          <span style="font-size:16px;">🏆</span>
           <div>
-            <div class="trust-card-title">Balanced Challenge • 50 Orb Cap</div>
-            <div class="trust-card-sub">Smooth progression with Armored Bricks, Lasers & Nova Prisms!</div>
+            <div class="trust-card-title">100% Live Onchain Leaderboard</div>
+            <div class="trust-card-sub">Every score minted on Base appears live on the Hall of Fame!</div>
           </div>
         </div>
 
@@ -1178,7 +1365,7 @@
           <button type="button" class="ctrl-chip" onclick="skipToGame()">✕</button>
         </div>
         <div class="modal-title">Claim Your Profile</div>
-        <div class="modal-desc">Select your theme and orb color to start playing on Base.</div>
+        <div class="modal-desc">Select your theme, handle, and orb color to register on Base.</div>
 
         <div class="form-row">
           <label class="form-lbl">1. Visual Theme</label>
@@ -1256,13 +1443,104 @@
 
   <script>
     // =========================================================================
-    // 1. LIVE VERIFIED SMART CONTRACT (BASE MAINNET)
+    // 1. WEB AUDIO SYNTHESIZER (ZERO EXTERNAL ASSETS, CRISP ARCADE SFX)
+    // =========================================================================
+    const sfx = {
+      enabled: true,
+      ctx: null,
+      lastHitTs: 0,
+      ensureCtx: function() {
+        if (!this.enabled) return null;
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume().catch(function() {});
+        }
+        return this.ctx;
+      },
+      playTone: function(freq, type, duration, vol, slideTo) {
+        const c = this.ensureCtx();
+        if (!c) return;
+        const now = c.currentTime;
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+        osc.type = type || 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
+        gain.gain.setValueAtTime(vol || 0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        osc.connect(gain);
+        gain.connect(c.destination);
+        osc.start(now);
+        osc.stop(now + duration);
+      },
+      shoot: function() {
+        this.playTone(520, 'triangle', 0.06, 0.05, 280);
+      },
+      hit: function(combo) {
+        const now = performance.now();
+        if (now - this.lastHitTs < 24) return;
+        this.lastHitTs = now;
+        const pitch = Math.min(980, 340 + (combo || 0) * 14);
+        this.playTone(pitch, 'sine', 0.05, 0.055, pitch * 0.75);
+      },
+      shatter: function() {
+        this.playTone(260, 'triangle', 0.14, 0.09, 95);
+        this.playTone(580, 'sine', 0.11, 0.06, 860);
+      },
+      pickup: function() {
+        this.playTone(587.33, 'sine', 0.09, 0.08, 880);
+        setTimeout(() => this.playTone(880, 'sine', 0.13, 0.08, 1174.66), 55);
+      },
+      prism: function() {
+        this.playTone(440, 'triangle', 0.18, 0.09, 1320);
+        setTimeout(() => this.playTone(660, 'sine', 0.22, 0.08, 1760), 60);
+      },
+      bomb: function() {
+        this.playTone(150, 'sawtooth', 0.32, 0.14, 38);
+        this.playTone(95, 'square', 0.28, 0.11, 32);
+      },
+      laser: function() {
+        this.playTone(1240, 'sawtooth', 0.22, 0.09, 220);
+      },
+      sweep: function() {
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((n, idx) => {
+          setTimeout(() => this.playTone(n, 'triangle', 0.18, 0.09), idx * 70);
+        });
+      },
+      gameOver: function() {
+        const notes = [330, 293.66, 261.63, 196];
+        notes.forEach((n, idx) => {
+          setTimeout(() => this.playTone(n, 'sawtooth', 0.22, 0.08), idx * 120);
+        });
+      }
+    };
+
+    function toggleSound() {
+      sfx.enabled = !sfx.enabled;
+      const btn = document.getElementById('topSoundBtn');
+      if (btn) btn.innerHTML = sfx.enabled ? '<span>🔊</span><span>SFX</span>' : '<span>🔇</span><span>Muted</span>';
+      if (sfx.enabled) sfx.pickup();
+      saveState();
+    }
+
+    // =========================================================================
+    // 2. LIVE VERIFIED SMART CONTRACT (BASE MAINNET) & REAL EVENT INDEXER
     // =========================================================================
     const BASE_CONTRACT = {
       name: 'Base',
       chainIdHex: '0x2105',
       address: '0xd5EB80b80Aedc76c7565128f20eD495B0fB7Dae2',
       explorer: 'https://basescan.org/address/0xd5EB80b80Aedc76c7565128f20eD495B0fB7Dae2',
+      rpcUrls: ['https://mainnet.base.org', 'https://base.llamarpc.com', 'https://1rpc.io/base'],
+      topics: {
+        ProfileClaimed: '0xcdd0277a5eeece4de7ddcc52ef63385c106198e3e97e86caa83695e1c9113e75',
+        GMSigned: '0x8ca2111b24314fb6f378dd163e867e443eb870daeb652a317057a1f3c9fbd4ed',
+        ScoreRecorded: '0xf267b9457eb3088208163c723409c7ca7a144ddbdec90eea83059f2e867e3bca'
+      },
       chainParams: {
         chainId: '0x2105',
         chainName: 'Base Mainnet',
@@ -1274,6 +1552,7 @@
 
     const app = {
       theme: 'dark',
+      sfxEnabled: true,
       network: 'base',
       wallet: null,
       profileMinted: false,
@@ -1286,19 +1565,14 @@
       bestWave: 1,
       cleanSweeps: 0,
       txCount: 0,
-      leaderboard: [
-        { name: 'WHALE_0X', chain: 'base', wave: 34, sweeps: 7, gm: '2.0x', score: 58400, color: '#38bdf8', isUser: false },
-        { name: 'BASE_SNIPER', chain: 'base', wave: 28, sweeps: 5, gm: '1.5x', score: 41200, color: '#10b981', isUser: false },
-        { name: 'ONCHAIN_ACE', chain: 'base', wave: 22, sweeps: 4, gm: '1.5x', score: 29800, color: '#a855f7', isUser: false },
-        { name: 'GM_LEGEND', chain: 'base', wave: 18, sweeps: 3, gm: '1.25x', score: 19500, color: '#f59e0b', isUser: false },
-        { name: 'NEON_STRIKER', chain: 'base', wave: 14, sweeps: 2, gm: '1.1x', score: 12400, color: '#f43f5e', isUser: false }
-      ]
+      onchainPlayers: []
     };
 
     try {
-      const saved = JSON.parse(localStorage.getItem('sheytonak_balanced_v7'));
+      const saved = JSON.parse(localStorage.getItem('sheytonak_live_v10'));
       if (saved && typeof saved === 'object') {
         Object.assign(app, saved);
+        sfx.enabled = app.sfxEnabled !== false;
         if (app.lastGmTs && (Date.now() - app.lastGmTs > 48 * 3600 * 1000)) {
           app.gmStreak = 0;
           app.gmMult = 1.0;
@@ -1308,11 +1582,13 @@
 
     function saveState() {
       try {
-        localStorage.setItem('sheytonak_balanced_v7', JSON.stringify({
-          theme: app.theme, network: app.network, profileMinted: app.profileMinted,
-          playerName: app.playerName, orbColor: app.orbColor, gmStreak: app.gmStreak,
-          gmMult: app.gmMult, lastGmTs: app.lastGmTs, bestScore: app.bestScore,
-          bestWave: app.bestWave, cleanSweeps: app.cleanSweeps, txCount: app.txCount
+        localStorage.setItem('sheytonak_live_v10', JSON.stringify({
+          theme: app.theme, sfxEnabled: sfx.enabled, network: app.network,
+          profileMinted: app.profileMinted, playerName: app.playerName,
+          orbColor: app.orbColor, gmStreak: app.gmStreak, gmMult: app.gmMult,
+          lastGmTs: app.lastGmTs, bestScore: app.bestScore, bestWave: app.bestWave,
+          cleanSweeps: app.cleanSweeps, txCount: app.txCount,
+          onchainPlayers: app.onchainPlayers
         }));
       } catch (e) {}
     }
@@ -1348,6 +1624,19 @@
       return lenHex + dataHex.padEnd(paddedLen, '0');
     }
 
+    function decodeAbiString(hexNoPrefix, byteOffset) {
+      const charOffset = byteOffset * 2;
+      if (charOffset + 64 > hexNoPrefix.length) return '';
+      const len = parseInt(hexNoPrefix.slice(charOffset, charOffset + 64), 16);
+      if (!len || charOffset + 64 + len * 2 > hexNoPrefix.length) return '';
+      const bytesHex = hexNoPrefix.slice(charOffset + 64, charOffset + 64 + len * 2);
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = parseInt(bytesHex.slice(i * 2, i * 2 + 2), 16);
+      }
+      return new TextDecoder().decode(bytes);
+    }
+
     function encodeClaimProfileABI(username, orbColor) {
       const str1Hex = toHexString(username);
       const str2Hex = toHexString(orbColor);
@@ -1356,7 +1645,98 @@
       return '0x05be2780' + toHexUint256(offset1) + toHexUint256(offset2) + str1Hex + str2Hex;
     }
 
-    async function sendContractTransaction(dataHex, actionLabel) {
+    async function rpcCall(method, params) {
+      for (let i = 0; i < BASE_CONTRACT.rpcUrls.length; i++) {
+        try {
+          const res = await fetch(BASE_CONTRACT.rpcUrls[i], {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: method, params: params })
+          });
+          const json = await res.json();
+          if (json && json.result !== undefined) return json.result;
+        } catch (e) {}
+      }
+      return null;
+    }
+
+    async function syncOnchainLeaderboard(showFeedback) {
+      const statusEl = document.getElementById('lbSyncStatus');
+      if (statusEl) statusEl.textContent = 'Syncing Base logs...';
+
+      try {
+        const latestHex = await rpcCall('eth_blockNumber', []);
+        if (!latestHex) throw new Error('RPC unavailable');
+        const latestBlock = parseInt(latestHex, 16);
+        const fromBlock = '0x' + Math.max(0, latestBlock - 45000).toString(16);
+
+        const logs = await rpcCall('eth_getLogs', [{
+          address: BASE_CONTRACT.address,
+          fromBlock: fromBlock,
+          toBlock: 'latest'
+        }]);
+
+        const playerMap = {};
+        for (let i = 0; i < app.onchainPlayers.length; i++) {
+          const p = app.onchainPlayers[i];
+          playerMap[p.address.toLowerCase()] = Object.assign({}, p);
+        }
+
+        if (Array.isArray(logs)) {
+          for (let i = 0; i < logs.length; i++) {
+            const log = logs[i];
+            if (!log.topics || log.topics.length < 2) continue;
+            const topic0 = log.topics[0].toLowerCase();
+            const addr = ('0x' + log.topics[1].slice(26)).toLowerCase();
+            const dataClean = (log.data || '').replace(/^0x/, '');
+
+            if (!playerMap[addr]) {
+              playerMap[addr] = {
+                address: addr,
+                name: addr.slice(0, 6) + '...' + addr.slice(-4),
+                color: '#38bdf8',
+                bestScore: 0,
+                bestWave: 1,
+                gmStreak: 0
+              };
+            }
+
+            if (topic0 === BASE_CONTRACT.topics.ProfileClaimed && dataClean.length >= 128) {
+              const off1 = parseInt(dataClean.slice(0, 64), 16);
+              const off2 = parseInt(dataClean.slice(64, 128), 16);
+              const uname = decodeAbiString(dataClean, off1);
+              const ucol = decodeAbiString(dataClean, off2);
+              if (uname) playerMap[addr].name = uname.slice(0, 15);
+              if (ucol && /^#[0-9a-fA-F]{6}$/.test(ucol)) playerMap[addr].color = ucol;
+            } else if (topic0 === BASE_CONTRACT.topics.ScoreRecorded && dataClean.length >= 128) {
+              const wVal = Number(BigInt('0x' + dataClean.slice(0, 64)));
+              const sVal = Number(BigInt('0x' + dataClean.slice(64, 128)));
+              if (sVal > playerMap[addr].bestScore) playerMap[addr].bestScore = sVal;
+              if (wVal > playerMap[addr].bestWave) playerMap[addr].bestWave = wVal;
+            } else if (topic0 === BASE_CONTRACT.topics.GMSigned && dataClean.length >= 64) {
+              const stVal = Number(BigInt('0x' + dataClean.slice(0, 64)));
+              if (stVal > playerMap[addr].gmStreak) playerMap[addr].gmStreak = stVal;
+            }
+          }
+        }
+
+        const list = Object.values(playerMap).filter(function(p) {
+          return p.bestScore > 0 || p.gmStreak > 0 || (p.name && !p.name.startsWith('0x'));
+        });
+        list.sort(function(a, b) { return b.bestScore - a.bestScore; });
+        app.onchainPlayers = list;
+        saveState();
+        renderLeaderboards();
+
+        if (statusEl) statusEl.textContent = 'Synced • ' + list.length + ' Onchain Players';
+        if (showFeedback) showToast('⛓️', 'Synced ' + list.length + ' real players from Base!');
+      } catch (e) {
+        if (statusEl) statusEl.textContent = 'Base Mainnet Live';
+        renderLeaderboards();
+      }
+    }
+
+    async function sendContractTransaction(dataHex, actionLabel, onSuccessMeta) {
       const target = BASE_CONTRACT;
       if (window.ethereum) {
         try {
@@ -1381,55 +1761,66 @@
           }
 
           showToast('⏳', 'Confirm "' + actionLabel + '" in wallet (' + target.name + ')...');
-          let txHash;
-          try {
-            txHash = await window.ethereum.request({
-              method: 'eth_sendTransaction',
-              params: [{
-                from: app.wallet,
-                to: target.address,
-                value: '0x0',
-                data: dataHex
-              }]
-            });
-          } catch (txErr) {
-            if (txErr && (txErr.code === 4001 || txErr.code === 'ACTION_REJECTED')) {
-              throw txErr;
-            }
-            txHash = await window.ethereum.request({
-              method: 'eth_sendTransaction',
-              params: [{
-                from: app.wallet,
-                to: target.address,
-                value: '0x0'
-              }]
-            });
-          }
+          const txHash = await window.ethereum.request({
+            method: 'eth_sendTransaction',
+            params: [{
+              from: app.wallet,
+              to: target.address,
+              value: '0x0',
+              data: dataHex
+            }]
+          });
+
           app.txCount++;
+          const myAddr = app.wallet.toLowerCase();
+          let existing = app.onchainPlayers.find(function(p) { return p.address.toLowerCase() === myAddr; });
+          if (!existing) {
+            existing = {
+              address: myAddr,
+              name: app.playerName,
+              color: app.orbColor,
+              bestScore: 0,
+              bestWave: 1,
+              gmStreak: app.gmStreak
+            };
+            app.onchainPlayers.push(existing);
+          }
+          existing.name = app.playerName;
+          existing.color = app.orbColor;
+          if (onSuccessMeta) {
+            if (onSuccessMeta.score && onSuccessMeta.score > existing.bestScore) existing.bestScore = onSuccessMeta.score;
+            if (onSuccessMeta.wave && onSuccessMeta.wave > existing.bestWave) existing.bestWave = onSuccessMeta.wave;
+            if (onSuccessMeta.gmStreak) existing.gmStreak = onSuccessMeta.gmStreak;
+          }
+          app.onchainPlayers.sort(function(a, b) { return b.bestScore - a.bestScore; });
           saveState();
-          showToast('⛓️', actionLabel + ' confirmed on ' + target.name + '! (' + String(txHash).slice(0, 8) + '...)');
+          renderLeaderboards();
+          sfx.pickup();
+          showToast('⛓️', actionLabel + ' confirmed on Base! (' + String(txHash).slice(0, 8) + '...)');
+          setTimeout(function() { syncOnchainLeaderboard(false); }, 4500);
           return true;
         } catch (err) {
           showToast('⚠️', err && err.message ? err.message.slice(0, 48) : 'Transaction cancelled');
           return false;
         }
       } else {
-        app.txCount++;
-        saveState();
-        showToast('⛓️', actionLabel + ' recorded on ' + target.name + '!');
-        return true;
+        showToast('⚠️', 'Please install MetaMask, Rabby, or Coinbase Wallet');
+        return false;
       }
     }
 
     // =========================================================================
-    // 2. UI & MODAL NAVIGATION
+    // 3. UI & MODAL NAVIGATION
     // =========================================================================
     function switchTab(tab) {
       document.getElementById('panePlay').classList.toggle('active', tab === 'play');
       document.getElementById('paneLeaderboard').classList.toggle('active', tab === 'leaderboard');
       document.getElementById('tabBtnPlay').classList.toggle('active', tab === 'play');
       document.getElementById('tabBtnLb').classList.toggle('active', tab === 'leaderboard');
-      if (tab === 'leaderboard') renderLeaderboards();
+      if (tab === 'leaderboard') {
+        renderLeaderboards();
+        syncOnchainLeaderboard(false);
+      }
     }
 
     function setTheme(mode) {
@@ -1473,14 +1864,13 @@
           const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
           app.wallet = accounts[0];
           updateWalletButton();
+          renderLeaderboards();
           showToast('👛', 'Connected: ' + app.wallet.slice(0, 6) + '...' + app.wallet.slice(-4));
         } catch (e) {
           showToast('⚠️', 'Wallet connection rejected');
         }
       } else {
-        app.wallet = '0x71C8...89A4';
-        updateWalletButton();
-        showToast('👛', 'Wallet Connected (Preview)');
+        showToast('⚠️', 'No Web3 wallet detected in browser');
       }
     }
 
@@ -1505,7 +1895,7 @@
       document.getElementById('nameInput').value = cleanName;
 
       const callData = encodeClaimProfileABI(app.playerName, app.orbColor);
-      const ok = await sendContractTransaction(callData, 'Claim Profile');
+      const ok = await sendContractTransaction(callData, 'Claim Profile', {});
       if (!ok) return;
 
       app.profileMinted = true;
@@ -1518,7 +1908,7 @@
     }
 
     // =========================================================================
-    // 3. DAILY GM STREAK
+    // 4. DAILY GM STREAK
     // =========================================================================
     const COOLDOWN_MS = 24 * 3600 * 1000;
     function isGmLocked() {
@@ -1547,12 +1937,12 @@
         showToast('⏳', 'Daily GM already claimed! Wait for the 24h cooldown.');
         return;
       }
-      const ok = await sendContractTransaction('0x25406903', 'Daily GM');
+      const nextStreak = (app.lastGmTs && (Date.now() - app.lastGmTs > 48 * 3600 * 1000)) ? 1 : (app.gmStreak + 1);
+      const ok = await sendContractTransaction('0x25406903', 'Daily GM', { gmStreak: nextStreak });
       if (!ok) return;
 
-      const now = Date.now();
-      app.gmStreak = (app.lastGmTs && (now - app.lastGmTs > 48 * 3600 * 1000)) ? 1 : (app.gmStreak + 1);
-      app.lastGmTs = now;
+      app.gmStreak = nextStreak;
+      app.lastGmTs = Date.now();
       app.gmMult = calcGmMult(app.gmStreak);
       game.score += Math.round(500 * app.gmMult);
       saveState();
@@ -1595,13 +1985,44 @@
     }, 1000);
 
     // =========================================================================
-    // 4. LEADERBOARDS
+    // 5. LIVE ONCHAIN LEADERBOARD & SOCIAL SCORE CARD GENERATOR
     // =========================================================================
+    async function mintRunScoreOnchain() {
+      const scoreToMint = game.score;
+      const waveToMint = game.wave;
+      if (scoreToMint <= 0) {
+        showToast('⚠️', 'Play at least 1 wave before minting score!');
+        return;
+      }
+      const dataHex = '0xf12017ce' + toHexUint256(waveToMint) + toHexUint256(scoreToMint);
+      const ok = await sendContractTransaction(dataHex, 'Submit Score (' + scoreToMint.toLocaleString() + ' PTS)', {
+        score: scoreToMint,
+        wave: waveToMint
+      });
+      if (!ok) return;
+      if (scoreToMint > app.bestScore) app.bestScore = scoreToMint;
+      if (waveToMint > app.bestWave) app.bestWave = waveToMint;
+      const btn = document.getElementById('goMintBtn');
+      if (btn) {
+        btn.innerHTML = '<span>✅</span><span>Score Recorded Onchain!</span>';
+        btn.disabled = true;
+      }
+      saveState();
+      renderLeaderboards();
+    }
+
     async function mintHighscoreOnchain() {
       const best = Math.max(game.score, app.bestScore);
       const wave = Math.max(game.wave, app.bestWave);
+      if (best <= 0) {
+        showToast('⚠️', 'Score must be greater than 0 to mint onchain!');
+        return;
+      }
       const dataHex = '0xf12017ce' + toHexUint256(wave) + toHexUint256(best);
-      const ok = await sendContractTransaction(dataHex, 'Mint Score (' + best.toLocaleString() + ' PTS)');
+      const ok = await sendContractTransaction(dataHex, 'Mint Score (' + best.toLocaleString() + ' PTS)', {
+        score: best,
+        wave: wave
+      });
       if (!ok) return;
       app.bestScore = best;
       app.bestWave = wave;
@@ -1609,85 +2030,170 @@
       renderLeaderboards();
     }
 
+    function downloadScoreCard() {
+      const scCanvas = document.createElement('canvas');
+      scCanvas.width = 1200;
+      scCanvas.height = 675;
+      const c = scCanvas.getContext('2d');
+
+      const grad = c.createLinearGradient(0, 0, 1200, 675);
+      grad.addColorStop(0, '#05070c');
+      grad.addColorStop(0.5, '#0b1326');
+      grad.addColorStop(1, '#050a18');
+      c.fillStyle = grad;
+      c.fillRect(0, 0, 1200, 675);
+
+      c.strokeStyle = 'rgba(56, 189, 248, 0.06)';
+      c.lineWidth = 1;
+      for (let x = 0; x <= 1200; x += 60) {
+        c.beginPath(); c.moveTo(x, 0); c.lineTo(x, 675); c.stroke();
+      }
+      for (let y = 0; y <= 675; y += 60) {
+        c.beginPath(); c.moveTo(0, y); c.lineTo(1200, y); c.stroke();
+      }
+
+      c.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+      c.lineWidth = 3;
+      drawRoundedRect(c, 48, 48, 1104, 579, 28);
+      c.stroke();
+
+      c.fillStyle = app.orbColor;
+      c.beginPath(); c.arc(108, 114, 14, 0, Math.PI * 2); c.fill();
+
+      c.fillStyle = '#f8fafc';
+      c.font = '900 36px -apple-system, BlinkMacSystemFont, sans-serif';
+      c.textAlign = 'left';
+      c.fillText('Sheytonak', 136, 126);
+
+      c.fillStyle = '#38bdf8';
+      c.font = '800 18px monospace';
+      c.fillText('ONCHAIN GAME ON BASE MAINNET', 340, 124);
+
+      c.fillStyle = '#94a3b8';
+      c.font = '700 20px monospace';
+      c.fillText('PLAYER: ' + app.playerName + (app.wallet ? ' (' + app.wallet.slice(0, 6) + '...' + app.wallet.slice(-4) + ')' : ''), 94, 210);
+
+      c.fillStyle = '#00dc82';
+      c.font = '900 108px monospace';
+      c.fillText(game.score.toLocaleString() + ' PTS', 90, 345);
+
+      c.fillStyle = '#f8fafc';
+      c.font = '800 34px monospace';
+      c.fillText('WAVE ' + game.wave + '   •   GM ' + app.gmMult + 'x   •   ' + app.cleanSweeps + ' SWEEPS', 94, 430);
+
+      c.fillStyle = '#64748b';
+      c.font = '700 20px monospace';
+      c.fillText('Contract: 0xd5EB80b80Aedc76c7565128f20eD495B0fB7Dae2', 94, 565);
+
+      c.textAlign = 'right';
+      c.fillStyle = '#94a3b8';
+      c.fillText('made with ❤️ by hoseyn (@itshoseyn)', 1106, 565);
+
+      const link = document.createElement('a');
+      link.download = 'sheytonak-score-' + game.score + '.png';
+      link.href = scCanvas.toDataURL('image/png');
+      link.click();
+      sfx.pickup();
+      showToast('📸', 'Score Card PNG downloaded!');
+    }
+
+    function shareScoreOnX() {
+      const nl = String.fromCharCode(10);
+      const msg = 'Just scored ' + game.score.toLocaleString() + ' PTS (Wave ' + game.wave + ') on Sheytonak — an onchain arcade game on @base! 🔵🎮' + nl + nl + 'Built by @itshoseyn — try to beat my high score 👇';
+      window.open('https://x.com/intent/tweet?text=' + encodeURIComponent(msg), '_blank', 'noopener,noreferrer');
+    }
+
     function escapeHtml(str) {
-      return String(str).replace(/[&<>"']/g, function(s) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s];
-      });
+      const qDouble = String.fromCharCode(34);
+      const qSingle = String.fromCharCode(39);
+      return String(str)
+        .split('&').join('&amp;')
+        .split('<').join('&lt;')
+        .split('>').join('&gt;')
+        .split(qDouble).join('&quot;')
+        .split(qSingle).join('&#39;');
     }
 
     function renderLeaderboards() {
-      const entries = app.leaderboard.filter(function(x) { return !x.isUser; });
+      const entries = app.onchainPlayers.slice().sort(function(a, b) {
+        return b.bestScore - a.bestScore;
+      });
+
+      const myAddr = app.wallet ? app.wallet.toLowerCase() : '';
+      const userRankIdx = myAddr ? entries.findIndex(function(x) { return x.address.toLowerCase() === myAddr; }) : -1;
+      const userRank = userRankIdx >= 0 ? (userRankIdx + 1) : null;
+
+      const miniEl = document.getElementById('miniLbList');
+      if (entries.length === 0) {
+        miniEl.innerHTML = '<div style="padding:14px 8px;text-align:center;font-size:11px;color:var(--text-dim);background:var(--surface-2);border-radius:9px;">No scores minted onchain yet.<br>Be the #1 player on Base!</div>';
+      } else {
+        const topSlice = entries.slice(0, 3).map(function(item, idx) {
+          return Object.assign({}, item, { rank: idx + 1 });
+        });
+        if (userRank && userRank > 3) {
+          topSlice.push(Object.assign({}, entries[userRankIdx], { rank: userRank }));
+        }
+        miniEl.innerHTML = topSlice.map(function(item) {
+          const isMe = myAddr && item.address.toLowerCase() === myAddr;
+          return '<div class="mini-lb-item ' + (isMe ? 'me' : '') + '">' +
+            '<div class="mini-lb-left">' +
+              '<span class="mini-rank">#' + item.rank + '</span>' +
+              '<span style="width:7px;height:7px;border-radius:50%;background:' + (item.color || '#38bdf8') + '"></span>' +
+              '<span class="mini-name">' + escapeHtml(item.name) + '</span>' +
+            '</div>' +
+            '<span class="mini-pts">' + Number(item.bestScore || 0).toLocaleString() + '</span>' +
+          '</div>';
+        }).join('');
+      }
+
       const userBest = Math.max(game.score, app.bestScore);
       const userWave = Math.max(game.wave, app.bestWave);
 
-      entries.push({
-        name: app.playerName, chain: 'base', wave: userWave,
-        sweeps: app.cleanSweeps, gm: app.gmMult + 'x', score: userBest, color: app.orbColor, isUser: true
-      });
-      entries.sort(function(a, b) { return b.score - a.score; });
-      const userRank = entries.findIndex(function(x) { return x.isUser; }) + 1;
-
-      const miniEl = document.getElementById('miniLbList');
-      const topSlice = entries.slice(0, 3);
-      if (userRank > 3) {
-        const meObj = entries.find(function(x) { return x.isUser; });
-        if (meObj) topSlice.push({
-          name: meObj.name, chain: 'base', wave: meObj.wave, sweeps: meObj.sweeps,
-          gm: meObj.gm, score: meObj.score, color: meObj.color, isUser: true, customRank: userRank
-        });
-      }
-
-      miniEl.innerHTML = topSlice.map(function(item, idx) {
-        const r = item.customRank || (idx + 1);
-        return '<div class="mini-lb-item ' + (item.isUser ? 'me' : '') + '">' +
-          '<div class="mini-lb-left">' +
-            '<span class="mini-rank">#' + r + '</span>' +
-            '<span style="width:7px;height:7px;border-radius:50%;background:' + item.color + '"></span>' +
-            '<span class="mini-name">' + escapeHtml(item.name) + '</span>' +
-          '</div>' +
-          '<span class="mini-pts">' + item.score.toLocaleString() + '</span>' +
-        '</div>';
-      }).join('');
-
       document.getElementById('fullBestScore').textContent = userBest.toLocaleString() + ' PTS';
-      document.getElementById('fullRankSub').textContent = 'Global Rank: #' + userRank;
+      document.getElementById('fullRankSub').textContent = userRank ? ('Onchain Rank: #' + userRank) : 'Unranked (Mint to rank)';
       document.getElementById('fullBestWave').textContent = 'Wave ' + userWave;
       document.getElementById('fullSweepsSub').textContent = app.cleanSweeps + ' Clean Sweeps ⚡';
       document.getElementById('fullGmMult').textContent = app.gmMult + 'x';
       document.getElementById('fullGmStreakSub').textContent = app.gmStreak + ' Day Streak';
-      document.getElementById('fullTxCount').textContent = app.txCount + ' TXs';
+      document.getElementById('fullPlayerCount').textContent = entries.length + ' Players';
 
-      document.getElementById('fullLbBody').innerHTML = entries.map(function(item, i) {
-        return '<tr class="' + (item.isUser ? 'me-row' : '') + '">' +
-          '<td style="font-family:monospace;font-weight:800;">#' + (i + 1) + '</td>' +
-          '<td><div style="display:flex;align-items:center;gap:8px;"><span style="width:9px;height:9px;border-radius:50%;background:' + item.color + '"></span><span>' + escapeHtml(item.name) + (item.isUser ? ' (YOU)' : '') + '</span></div></td>' +
-          '<td><span class="chain-tag base">base</span></td>' +
-          '<td style="font-family:monospace;">Wave ' + item.wave + '</td>' +
-          '<td style="font-family:monospace;color:#a855f7;">' + item.sweeps + ' ⚡</td>' +
-          '<td style="font-family:monospace;color:var(--gold);">' + item.gm + '</td>' +
-          '<td style="text-align:right;font-family:monospace;font-weight:800;color:var(--score-green);">' + item.score.toLocaleString() + ' PTS</td>' +
-        '</tr>';
-      }).join('');
+      const tbody = document.getElementById('fullLbBody');
+      if (entries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-dim);">No onchain scores recorded on this contract yet. Connect your wallet and mint your score to claim Rank #1!</td></tr>';
+      } else {
+        tbody.innerHTML = entries.map(function(item, i) {
+          const isMe = myAddr && item.address.toLowerCase() === myAddr;
+          const shortAddr = item.address.slice(0, 6) + '...' + item.address.slice(-4);
+          return '<tr class="' + (isMe ? 'me-row' : '') + '">' +
+            '<td style="font-family:monospace;font-weight:800;">#' + (i + 1) + '</td>' +
+            '<td><div style="display:flex;align-items:center;gap:8px;"><span style="width:9px;height:9px;border-radius:50%;background:' + (item.color || '#38bdf8') + '"></span><div><div>' + escapeHtml(item.name) + (isMe ? ' (YOU)' : '') + '</div><div style="font-family:monospace;font-size:10px;color:var(--text-dim);">' + shortAddr + '</div></div></div></td>' +
+            '<td><span class="chain-tag base">base</span></td>' +
+            '<td style="font-family:monospace;">Wave ' + (item.bestWave || 1) + '</td>' +
+            '<td style="font-family:monospace;color:var(--gold);">' + (item.gmStreak || 0) + 'd</td>' +
+            '<td style="text-align:right;font-family:monospace;font-weight:800;color:var(--score-green);">' + Number(item.bestScore || 0).toLocaleString() + ' PTS</td>' +
+          '</tr>';
+        }).join('');
+      }
     }
 
     // =========================================================================
-    // 5. BALANCED PROGRESSIVE ENGINE (50-ORB CAP + SMOOTH DIFFICULTY CURVE)
+    // 6. ENLARGED 560x700 ARENA + REAL RAYCAST AIM GUIDE + SMOOTH DIFFICULTY
     // =========================================================================
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const W = 480;
-    const H = 600;
+    const W = 560;
+    const H = 700;
 
     const COLS = 7;
-    const PAD = 16;
-    const GAP = 6;
+    const PAD = 18;
+    const GAP = 7;
     const BW = (W - PAD * 2 - GAP * (COLS - 1)) / COLS;
-    const BH = 40;
-    const TOP_OFFSET = 58;
-    const LAUNCH_Y = H - 32;
-    const DANGER_Y = LAUNCH_Y - 48;
-    const ORB_R = 6.5;
-    const MAX_ORBS = 50; // Fair 50-orb cap
+    const BH = 46;
+    const TOP_OFFSET = 64;
+    const LAUNCH_Y = H - 36;
+    const DANGER_Y = LAUNCH_Y - 54;
+    const ORB_R = 7.2;
+    const MAX_ORBS = 50;
 
     const game = {
       state: 'AIM',
@@ -1716,14 +2222,123 @@
     function getDifficultyTier(w) {
       if (w <= 4) return { label: 'TIER I • WARMUP', color: '#38bdf8' };
       if (w <= 9) return { label: 'TIER II • RISING', color: '#10b981' };
-      if (w <= 15) return { label: 'TIER III • INTENSE', color: '#f59e0b' };
-      if (w <= 22) return { label: 'TIER IV • HARDCORE', color: '#f97316' };
+      if (w <= 16) return { label: 'TIER III • INTENSE', color: '#f59e0b' };
+      if (w <= 24) return { label: 'TIER IV • HARDCORE', color: '#f97316' };
       return { label: 'TIER V • NIGHTMARE', color: '#f43f5e' };
     }
 
     function triggerShake(intensity, frames) {
       game.shakeIntensity = Math.max(game.shakeIntensity, intensity);
       game.shakeTimer = Math.max(game.shakeTimer, frames);
+    }
+
+    function castAimRay(ox, oy, dx, dy, maxDist) {
+      let bestT = maxDist;
+      let hitNormalX = 0;
+      let hitNormalY = 0;
+      let hitType = 'none';
+
+      if (dx < -1e-6) {
+        const tLeft = (ORB_R - ox) / dx;
+        if (tLeft > 0.01 && tLeft < bestT) {
+          bestT = tLeft;
+          hitNormalX = 1; hitNormalY = 0; hitType = 'wall';
+        }
+      } else if (dx > 1e-6) {
+        const tRight = (W - ORB_R - ox) / dx;
+        if (tRight > 0.01 && tRight < bestT) {
+          bestT = tRight;
+          hitNormalX = -1; hitNormalY = 0; hitType = 'wall';
+        }
+      }
+
+      if (dy < -1e-6) {
+        const tTop = (ORB_R - oy) / dy;
+        if (tTop > 0.01 && tTop < bestT) {
+          bestT = tTop;
+          hitNormalX = 0; hitNormalY = 1; hitType = 'wall';
+        }
+      }
+
+      for (let i = 0; i < game.blocks.length; i++) {
+        const b = game.blocks[i];
+        if (b.hp <= 0 || b.isPickup) continue;
+
+        const minX = b.x - ORB_R;
+        const maxX = b.x + b.w + ORB_R;
+        const minY = b.y - ORB_R;
+        const maxY = b.y + b.h + ORB_R;
+
+        let tmin = 0;
+        let tmax = bestT;
+        let nx = 0, ny = 0;
+
+        if (Math.abs(dx) < 1e-8) {
+          if (ox < minX || ox > maxX) continue;
+        } else {
+          const invDx = 1 / dx;
+          let t1 = (minX - ox) * invDx;
+          let t2 = (maxX - ox) * invDx;
+          let n1x = -1;
+          if (t1 > t2) {
+            const tmp = t1; t1 = t2; t2 = tmp;
+            n1x = 1;
+          }
+          if (t1 > tmin) {
+            tmin = t1; nx = n1x; ny = 0;
+          }
+          if (t2 < tmax) tmax = t2;
+          if (tmin > tmax) continue;
+        }
+
+        if (Math.abs(dy) < 1e-8) {
+          if (oy < minY || oy > maxY) continue;
+        } else {
+          const invDy = 1 / dy;
+          let t1 = (minY - oy) * invDy;
+          let t2 = (maxY - oy) * invDy;
+          let n1y = -1;
+          if (t1 > t2) {
+            const tmp = t1; t1 = t2; t2 = tmp;
+            n1y = 1;
+          }
+          if (t1 > tmin) {
+            tmin = t1; nx = 0; ny = n1y;
+          }
+          if (t2 < tmax) tmax = t2;
+          if (tmin > tmax) continue;
+        }
+
+        if (tmin > 0.01 && tmin < bestT) {
+          bestT = tmin;
+          hitNormalX = nx;
+          hitNormalY = ny;
+          hitType = 'block';
+        }
+      }
+
+      return {
+        x: ox + dx * bestT,
+        y: oy + dy * bestT,
+        t: bestT,
+        nx: hitNormalX,
+        ny: hitNormalY,
+        hitType: hitType
+      };
+    }
+
+    function triggerGameOver() {
+      if (game.state === 'OVER') return;
+      game.state = 'OVER';
+      sfx.gameOver();
+      document.getElementById('goFinalScore').textContent = game.score.toLocaleString() + ' PTS';
+      document.getElementById('goFinalWave').textContent = 'Wave ' + game.wave;
+      const mintBtn = document.getElementById('goMintBtn');
+      if (mintBtn) {
+        mintBtn.disabled = false;
+        mintBtn.innerHTML = '<span>⛓️</span><span>Submit Score Onchain</span>';
+      }
+      document.getElementById('gameOverOverlay').classList.add('show');
     }
 
     function spawnWaveRow(w) {
@@ -1736,7 +2351,7 @@
       for (let i = 0; i < game.blocks.length; i++) {
         const b = game.blocks[i];
         if (!b.isPickup && b.type !== 'steel' && b.targetY + BH >= DANGER_Y) {
-          game.state = 'OVER';
+          triggerGameOver();
         }
       }
 
@@ -1749,23 +2364,20 @@
       const effectiveOrbs = Math.min(MAX_ORBS, game.totalOrbs + game.bonusOrbsNext);
       const canSpawnOrbPickup = effectiveOrbs < MAX_ORBS;
 
-      // Guaranteed +1 Orb pickup until 20 orbs, then high chance up to 50 cap
-      const orbSpawnChance = effectiveOrbs < 20 ? 1.0 : (effectiveOrbs < 38 ? 0.85 : 0.65);
+      const orbSpawnChance = effectiveOrbs < 22 ? 1.0 : (effectiveOrbs < 40 ? 0.85 : 0.65);
       const orbCol1 = (canSpawnOrbPickup && Math.random() < orbSpawnChance) ? cols[0] : -1;
-      const orbCol2 = (canSpawnOrbPickup && effectiveOrbs < 35 && w % 3 === 0) ? cols[2] : -1;
-      const specialCol = (w >= 2 && Math.random() < 0.62) ? cols[1] : -1;
+      const orbCol2 = (canSpawnOrbPickup && effectiveOrbs < 32 && w % 3 === 0) ? cols[2] : -1;
+      const specialCol = (w >= 2 && Math.random() < 0.60) ? cols[1] : -1;
 
       let steelCount = 0;
-      const maxSteelThisWave = w >= 16 ? 2 : (w >= 7 ? 1 : 0);
+      const maxSteelThisWave = w >= 18 ? 2 : (w >= 8 ? 1 : 0);
       let breakableSpawned = 0;
 
-      // Smooth, well-balanced difficulty curve: scales fairly with player orbs and wave
-      const wavePressure = Math.pow(w, 1.12) * 0.95;
-      const orbFactor = effectiveOrbs * (w <= 5 ? 0.55 : 0.72);
+      const wavePressure = Math.pow(w, 1.08) * 0.85;
+      const orbFactor = effectiveOrbs * (w <= 4 ? 0.48 : (w <= 10 ? 0.62 : 0.72));
       const basePower = Math.max(2, Math.round(wavePressure + orbFactor));
 
-      // Row density starts at 48% and caps smoothly at 74%
-      const fillChance = Math.min(0.74, 0.46 + w * 0.018);
+      const fillChance = Math.min(0.72, 0.45 + w * 0.016);
 
       for (let c = 0; c < COLS; c++) {
         const bx = PAD + c * (BW + GAP);
@@ -1782,15 +2394,15 @@
 
         if (c === specialCol) {
           const spRoll = Math.random();
-          if (spRoll < 0.30) {
+          if (spRoll < 0.32) {
             game.blocks.push({
               id: Math.random(), col: c, row: 0, x: bx, y: by, targetY: by,
               w: BW, h: BH, type: 'prism', isPickup: true,
               hp: 1, maxHp: 1, hitScale: 1
             });
             continue;
-          } else if (spRoll < 0.65) {
-            const hp = Math.max(2, Math.round(basePower * 0.85));
+          } else if (spRoll < 0.66) {
+            const hp = Math.max(2, Math.round(basePower * 0.82));
             game.blocks.push({
               id: Math.random(), col: c, row: 0, x: bx, y: by, targetY: by,
               w: BW, h: BH, type: 'laser', isPickup: false,
@@ -1799,7 +2411,7 @@
             breakableSpawned++;
             continue;
           } else {
-            const hp = Math.max(2, Math.round(basePower * 0.90));
+            const hp = Math.max(2, Math.round(basePower * 0.88));
             game.blocks.push({
               id: Math.random(), col: c, row: 0, x: bx, y: by, targetY: by,
               w: BW, h: BH, type: 'bomb', isPickup: false,
@@ -1814,14 +2426,14 @@
 
         const roll = Math.random();
         let type = 'normal';
-        let hpMult = 0.72 + Math.random() * 0.45;
+        let hpMult = 0.70 + Math.random() * 0.42;
 
-        if (w >= 7 && steelCount < maxSteelThisWave && roll < 0.09) {
+        if (w >= 8 && steelCount < maxSteelThisWave && roll < 0.08) {
           type = 'steel';
           steelCount++;
-        } else if (w >= 5 && roll < (0.10 + Math.min(0.20, w * 0.012))) {
+        } else if (w >= 5 && roll < (0.09 + Math.min(0.18, w * 0.011))) {
           type = 'armored';
-          hpMult = 1.45 + Math.random() * 0.25;
+          hpMult = 1.40 + Math.random() * 0.22;
           breakableSpawned++;
         } else {
           breakableSpawned++;
@@ -1861,6 +2473,7 @@
       game.floatTexts = [];
       game.shotFrames = 0;
       document.getElementById('recallBtn').style.display = 'none';
+      document.getElementById('gameOverOverlay').classList.remove('show');
       spawnWaveRow(1);
       updateHud();
     }
@@ -1877,7 +2490,7 @@
       game.shootQueue = 0;
       for (let i = 0; i < game.orbs.length; i++) {
         game.orbs[i].vx = 0;
-        game.orbs[i].vy = 26;
+        game.orbs[i].vy = 28;
       }
     }
 
@@ -1892,8 +2505,9 @@
     function isUiClick(target) {
       if (!target || !target.closest) return false;
       if (document.querySelector('.modal-backdrop.open')) return true;
+      if (document.getElementById('gameOverOverlay').classList.contains('show')) return true;
       if (!document.getElementById('panePlay').classList.contains('active')) return true;
-      return Boolean(target.closest('button, a, input, .topbar, .mini-lb-card, .corner-socials, .canvas-top-controls'));
+      return Boolean(target.closest('button, a, input, .topbar, .corner-lb-card, .corner-socials, .canvas-top-controls'));
     }
 
     window.addEventListener('pointermove', function(e) {
@@ -1908,10 +2522,6 @@
 
     window.addEventListener('pointerdown', function(e) {
       if (e.button !== 0 || isUiClick(e.target)) return;
-      if (game.state === 'OVER') {
-        restartGame();
-        return;
-      }
       if (game.state !== 'AIM') return;
       const pos = getCanvasPos(e.clientX, e.clientY);
       const dx = pos.x - game.launchX;
@@ -1923,6 +2533,7 @@
     });
 
     function fireSalvo() {
+      sfx.ensureCtx();
       game.state = 'SHOOT';
       game.shootQueue = game.totalOrbs;
       game.shootTimer = 0;
@@ -1933,7 +2544,8 @@
     }
 
     function spawnOrb(x, y, angle, isClone) {
-      const spd = 11.2;
+      const spd = 12.2;
+      if (!isClone) sfx.shoot();
       game.orbs.push({
         x: x !== undefined ? x : game.launchX,
         y: y !== undefined ? y : LAUNCH_Y - 2,
@@ -1967,6 +2579,7 @@
         b.hp -= item.dmg;
         b.hitScale = 0.84;
         game.comboCount++;
+        sfx.hit(game.comboCount);
         const comboBonus = Math.min(2.5, 1 + Math.floor(game.comboCount / 14) * 0.25);
         game.score += Math.round(20 * app.gmMult * comboBonus);
 
@@ -1976,32 +2589,36 @@
           const cy = b.y + b.h / 2;
           const bCol = blockColor(b);
           addExplosion(cx, cy, bCol, 14);
-          game.shockwaves.push({ x: cx, y: cy, r: 6, maxR: 48, alpha: 0.9, color: bCol });
+          game.shockwaves.push({ x: cx, y: cy, r: 6, maxR: 52, alpha: 0.9, color: bCol });
 
           if (b.type === 'bomb') {
+            sfx.bomb();
             triggerShake(6, 12);
-            game.shockwaves.push({ x: cx, y: cy, r: 10, maxR: 135, alpha: 1, color: '#f97316' });
+            game.shockwaves.push({ x: cx, y: cy, r: 10, maxR: 155, alpha: 1, color: '#f97316' });
             game.floatTexts.push({ x: cx, y: cy - 8, txt: 'NOVA BLAST!', color: '#f97316', alpha: 1 });
             for (let i = 0; i < game.blocks.length; i++) {
               const other = game.blocks[i];
               if (other.hp > 0 && other.type !== 'steel' && !other.isPickup) {
-                if (Math.hypot((other.x + other.w / 2) - cx, (other.y + other.h / 2) - cy) < 135) {
-                  queue.push({ block: other, dmg: Math.max(10, Math.ceil(other.maxHp * 0.78)) });
+                if (Math.hypot((other.x + other.w / 2) - cx, (other.y + other.h / 2) - cy) < 155) {
+                  queue.push({ block: other, dmg: Math.max(10, Math.ceil(other.maxHp * 0.80)) });
                 }
               }
             }
           } else if (b.type === 'laser') {
+            sfx.laser();
             triggerShake(4, 9);
             game.beams.push({ x: cx, y: cy, alpha: 1, color: '#eab308' });
             game.floatTexts.push({ x: cx, y: cy - 8, txt: 'CROSS BEAM!', color: '#eab308', alpha: 1 });
             for (let i = 0; i < game.blocks.length; i++) {
               const other = game.blocks[i];
               if (other.hp > 0 && other.type !== 'steel' && !other.isPickup) {
-                if (Math.abs(other.y - b.y) < 14 || Math.abs(other.x - b.x) < 14) {
-                  queue.push({ block: other, dmg: Math.max(8, Math.ceil(other.maxHp * 0.68)) });
+                if (Math.abs(other.y - b.y) < 16 || Math.abs(other.x - b.x) < 16) {
+                  queue.push({ block: other, dmg: Math.max(8, Math.ceil(other.maxHp * 0.70)) });
                 }
               }
             }
+          } else {
+            sfx.shatter();
           }
         }
       }
@@ -2022,9 +2639,10 @@
         if (b.isPickup) {
           const cx = b.x + b.w / 2;
           const cy = b.y + b.h / 2;
-          if (Math.hypot(o.x - cx, o.y - cy) < ORB_R + 15) {
+          if (Math.hypot(o.x - cx, o.y - cy) < ORB_R + 16) {
             if (b.type === 'plus') {
               b.hp = 0;
+              sfx.pickup();
               const projected = game.totalOrbs + game.bonusOrbsNext;
               if (projected < MAX_ORBS) {
                 game.bonusOrbsNext += 1;
@@ -2039,6 +2657,7 @@
               game.blocks.splice(i, 1);
             } else if (b.type === 'prism') {
               b.hp = 0;
+              sfx.prism();
               const baseAng = Math.atan2(o.vy, o.vx);
               const spreadOffsets = [-0.36, -0.12, 0.12, 0.36];
               for (let k = 0; k < spreadOffsets.length; k++) {
@@ -2048,7 +2667,7 @@
               }
               triggerShake(4, 8);
               addExplosion(cx, cy, '#e879f9', 16);
-              game.shockwaves.push({ x: cx, y: cy, r: 8, maxR: 65, alpha: 1, color: '#e879f9' });
+              game.shockwaves.push({ x: cx, y: cy, r: 8, maxR: 70, alpha: 1, color: '#e879f9' });
               game.floatTexts.push({ x: cx, y: cy - 10, txt: 'NOVA SPLIT +4!', color: '#e879f9', alpha: 1 });
               game.blocks.splice(i, 1);
             }
@@ -2070,12 +2689,13 @@
           else if (min === t) { o.y = b.y - ORB_R - 0.6; o.vy = -Math.abs(o.vy); }
           else { o.y = b.y + b.h + ORB_R + 0.6; o.vy = Math.abs(o.vy); }
 
-          if (Math.abs(o.vy) < 0.65) {
-            o.vy = (o.vy >= 0 ? 1 : -1) * 0.75;
+          if (Math.abs(o.vy) < 0.7) {
+            o.vy = (o.vy >= 0 ? 1 : -1) * 0.8;
           }
 
           if (b.type === 'steel') {
             b.hitScale = 0.93;
+            sfx.hit(0);
             addExplosion(cx, cy, '#94a3b8', 4);
           } else {
             damageBlock(b, 1);
@@ -2124,7 +2744,7 @@
             stepOrbPhysics(o, dt);
             if (o.y >= LAUNCH_Y) {
               if (!o.isClone && game.nextLaunchX === null) {
-                game.nextLaunchX = Math.max(28, Math.min(W - 28, o.x));
+                game.nextLaunchX = Math.max(32, Math.min(W - 32, o.x));
               }
               game.orbs.splice(i, 1);
             }
@@ -2183,6 +2803,7 @@
         const bonus = Math.round(2500 * app.gmMult);
         game.score += bonus;
         app.cleanSweeps += 1;
+        sfx.sweep();
         triggerShake(5, 10);
         const banner = document.getElementById('sweepBanner');
         banner.textContent = '⚡ CLEAN SWEEP! +' + bonus.toLocaleString() + ' PTS';
@@ -2268,30 +2889,51 @@
       }
 
       if (game.state === 'AIM') {
+        const startX = game.launchX;
+        const startY = LAUNCH_Y - 2;
         const ux = Math.cos(game.aimAngle);
         const uy = Math.sin(game.aimAngle);
-        let tx = 9999;
-        if (ux < 0) tx = (ORB_R - game.launchX) / ux;
-        if (ux > 0) tx = (W - ORB_R - game.launchX) / ux;
-        const ty = (ORB_R - LAUNCH_Y) / uy;
-        const t = Math.min(tx, ty, 380);
-        const hx = game.launchX + ux * t;
-        const hy = LAUNCH_Y + uy * t;
+
+        const hit1 = castAimRay(startX, startY, ux, uy, 800);
 
         ctx.save();
-        ctx.setLineDash([5, 6]);
+        ctx.setLineDash([6, 6]);
         ctx.strokeStyle = app.orbColor;
-        ctx.lineWidth = 2.2;
+        ctx.lineWidth = 2.4;
         ctx.beginPath();
-        ctx.moveTo(game.launchX, LAUNCH_Y);
-        ctx.lineTo(hx, hy);
-        const rux = (Math.abs(tx - t) < 1) ? -ux : ux;
-        const ruy = (Math.abs(ty - t) < 1) ? -uy : uy;
-        ctx.lineTo(hx + rux * 95, hy + ruy * 95);
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(hit1.x, hit1.y);
         ctx.stroke();
 
-        ctx.fillStyle = app.orbColor;
-        ctx.beginPath(); ctx.arc(hx, hy, 3.5, 0, Math.PI * 2); ctx.fill();
+        if (hit1.hitType !== 'none') {
+          ctx.setLineDash([]);
+          ctx.fillStyle = app.orbColor;
+          ctx.beginPath();
+          ctx.arc(hit1.x, hit1.y, 4.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          const dot = ux * hit1.nx + uy * hit1.ny;
+          const rux = ux - 2 * dot * hit1.nx;
+          const ruy = uy - 2 * dot * hit1.ny;
+          const hit2 = castAimRay(hit1.x + hit1.nx * 0.5, hit1.y + hit1.ny * 0.5, rux, ruy, 165);
+
+          ctx.globalAlpha = 0.72;
+          ctx.setLineDash([4, 5]);
+          ctx.beginPath();
+          ctx.moveTo(hit1.x, hit1.y);
+          ctx.lineTo(hit2.x, hit2.y);
+          ctx.stroke();
+
+          const arrowAng = Math.atan2(ruy, rux);
+          const arrowLen = 9;
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.moveTo(hit2.x, hit2.y);
+          ctx.lineTo(hit2.x - arrowLen * Math.cos(arrowAng - 0.42), hit2.y - arrowLen * Math.sin(arrowAng - 0.42));
+          ctx.moveTo(hit2.x, hit2.y);
+          ctx.lineTo(hit2.x - arrowLen * Math.cos(arrowAng + 0.42), hit2.y - arrowLen * Math.sin(arrowAng + 0.42));
+          ctx.stroke();
+        }
         ctx.restore();
       }
 
@@ -2309,11 +2951,11 @@
         if (b.type === 'plus') {
           ctx.strokeStyle = '#10b981';
           ctx.lineWidth = 2.5;
-          ctx.beginPath(); ctx.arc(cx, cy, 13, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath(); ctx.arc(cx, cy, 14, 0, Math.PI * 2); ctx.stroke();
           ctx.fillStyle = 'rgba(16, 185, 129, 0.16)';
           ctx.fill();
           ctx.fillStyle = '#34d399';
-          ctx.font = '800 11px monospace';
+          ctx.font = '800 12px monospace';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText('+1', cx, cy + 1);
@@ -2325,16 +2967,16 @@
           ctx.strokeStyle = '#e879f9';
           ctx.lineWidth = 2.5;
           ctx.beginPath();
-          ctx.moveTo(cx, cy - 13);
-          ctx.lineTo(cx + 13, cy);
-          ctx.lineTo(cx, cy + 13);
-          ctx.lineTo(cx - 13, cy);
+          ctx.moveTo(cx, cy - 14);
+          ctx.lineTo(cx + 14, cy);
+          ctx.lineTo(cx, cy + 14);
+          ctx.lineTo(cx - 14, cy);
           ctx.closePath();
           ctx.stroke();
           ctx.fillStyle = 'rgba(232, 121, 249, 0.18)';
           ctx.fill();
           ctx.fillStyle = '#f0abfc';
-          ctx.font = '800 10px monospace';
+          ctx.font = '800 11px monospace';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText('+4', cx, cy + 1);
@@ -2344,16 +2986,16 @@
 
         if (b.type === 'steel') {
           ctx.fillStyle = style.getPropertyValue('--steel-fill').trim() || '#1e293b';
-          drawRoundedRect(ctx, b.x, b.y, b.w, b.h, 8);
+          drawRoundedRect(ctx, b.x, b.y, b.w, b.h, 9);
           ctx.fill();
           ctx.strokeStyle = style.getPropertyValue('--steel-top').trim() || '#475569';
           ctx.lineWidth = 2;
           ctx.stroke();
           ctx.fillStyle = style.getPropertyValue('--steel-bot').trim() || '#090d16';
-          const p = 5;
+          const p = 6;
           const rivets = [[b.x+p, b.y+p], [b.x+b.w-p, b.y+p], [b.x+p, b.y+b.h-p], [b.x+b.w-p, b.y+b.h-p]];
           for (let r = 0; r < rivets.length; r++) {
-            ctx.beginPath(); ctx.arc(rivets[r][0], rivets[r][1], 2, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(rivets[r][0], rivets[r][1], 2.2, 0, Math.PI * 2); ctx.fill();
           }
           ctx.restore();
           continue;
@@ -2361,22 +3003,22 @@
 
         const col = blockColor(b);
         ctx.fillStyle = col;
-        drawRoundedRect(ctx, b.x, b.y, b.w, b.h, 8);
+        drawRoundedRect(ctx, b.x, b.y, b.w, b.h, 9);
         ctx.fill();
 
         if (b.type === 'armored') {
           ctx.strokeStyle = '#fda4af';
           ctx.lineWidth = 2.5;
-          drawRoundedRect(ctx, b.x + 1, b.y + 1, b.w - 2, b.h - 2, 7);
+          drawRoundedRect(ctx, b.x + 1, b.y + 1, b.w - 2, b.h - 2, 8);
           ctx.stroke();
         }
 
         ctx.fillStyle = 'rgba(255, 255, 255, 0.16)';
-        drawRoundedRect(ctx, b.x + 2, b.y + 2, b.w - 4, 8, 4);
+        drawRoundedRect(ctx, b.x + 2, b.y + 2, b.w - 4, 9, 4);
         ctx.fill();
 
         ctx.fillStyle = '#ffffff';
-        ctx.font = '800 13px monospace';
+        ctx.font = '800 14px monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const prefix = b.type === 'bomb' ? '💥' : (b.type === 'laser' ? '⚡' : (b.type === 'armored' ? '🛡️' : ''));
@@ -2411,9 +3053,9 @@
       ctx.fillStyle = app.orbColor;
       ctx.beginPath(); ctx.arc(game.launchX, LAUNCH_Y, ORB_R + 2.5, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = style.getPropertyValue('--text-muted').trim() || '#94a3b8';
-      ctx.font = '800 11px monospace';
+      ctx.font = '800 12px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('x' + game.totalOrbs, game.launchX, LAUNCH_Y + 18);
+      ctx.fillText('x' + game.totalOrbs, game.launchX, LAUNCH_Y + 20);
 
       for (let i = 0; i < game.particles.length; i++) {
         const p = game.particles[i];
@@ -2427,26 +3069,11 @@
         const ft = game.floatTexts[i];
         ctx.globalAlpha = Math.max(0, ft.alpha);
         ctx.fillStyle = ft.color;
-        ctx.font = '800 12px monospace';
+        ctx.font = '800 13px monospace';
         ctx.textAlign = 'center';
         ctx.fillText(ft.txt, ft.x, ft.y);
       }
       ctx.globalAlpha = 1;
-
-      if (game.state === 'OVER') {
-        ctx.fillStyle = 'rgba(5, 7, 12, 0.90)';
-        ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle = '#f43f5e';
-        ctx.font = '800 28px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('WAVE OVERRUN', W / 2, H / 2 - 22);
-        ctx.fillStyle = '#f8fafc';
-        ctx.font = '700 14px sans-serif';
-        ctx.fillText('Score: ' + game.score.toLocaleString() + ' PTS • Wave ' + game.wave, W / 2, H / 2 + 8);
-        ctx.fillStyle = '#38bdf8';
-        ctx.font = '700 12px sans-serif';
-        ctx.fillText('Click anywhere to Play Again', W / 2, H / 2 + 34);
-      }
       ctx.restore();
     }
 
@@ -2470,6 +3097,8 @@
     selectColor(app.orbColor, null);
     document.getElementById('nameInput').value = app.playerName;
     document.getElementById('topProfileText').textContent = app.playerName;
+    const sBtn = document.getElementById('topSoundBtn');
+    if (sBtn) sBtn.innerHTML = sfx.enabled ? '<span>🔊</span><span>SFX</span>' : '<span>🔇</span><span>Muted</span>';
     if (app.profileMinted) {
       document.getElementById('startPlayBtn').disabled = false;
       document.getElementById('startPlayBtn').textContent = '▶ START GAME';
@@ -2478,6 +3107,7 @@
     updateGmUi();
     restartGame();
     renderLeaderboards();
+    syncOnchainLeaderboard(false);
     requestAnimationFrame(animate);
   </script>
 </body>
